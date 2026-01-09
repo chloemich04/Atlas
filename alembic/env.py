@@ -5,6 +5,8 @@ from app.db.base import Base
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
+from app.db.base_class import Base
+
 from alembic import context
 
 # this is the Alembic Config object, which provides
@@ -61,7 +63,7 @@ def run_migrations_online() -> None:
     """
 
     config.set_main_option("sqlalchemy.url", settings.database_url)
-    
+
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
