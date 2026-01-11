@@ -9,7 +9,7 @@ router = APIRouter(prefix="/categories", tags=["categories"])
 
 
 @router.post("/", response_model=CategoryRead)
-def create_category(category_in: CategoryCreate, db: Session = Depends(get_db)) -> list[Category]:
+def create_category(category_in: CategoryCreate, db: Session = Depends(get_db)) -> Category:
     category = Category(name=category_in.name)
     db.add(category)
     db.commit()
@@ -25,6 +25,6 @@ def list_categories(db: Session = Depends(get_db)) -> list[Category]:
 def get_category(category_id: int, db: Session = Depends(get_db)) -> Category:
     category = db.query(Category).filter(Category.id == category_id).first()
 
-    if category in None:
+    if category is None:
         raise HTTPException(status_code=404, detail="Category not found")
     return category

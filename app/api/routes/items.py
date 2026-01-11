@@ -26,11 +26,16 @@ def list_items(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
     q: str | None = Query(default=None, min_length=1),
+    category_id: int | None = Query(default=None, ge=1)
     ) -> list[Item]:
     query = db.query(Item)
 
     if q:
         query = query.filter(Item.name.ilike(f"%{q}%"))
+    
+    if category_id is not None:
+        query = query.filter(Item.category_id == category_id)
+        
 
     return query.offset(skip).limit(limit).all()
 
@@ -44,10 +49,11 @@ def get_item(item_id: int, db: Session = Depends(get_db)) -> Item:
 @router.put("/{item_id}", response_model=ItemRead)
 def update_item(
     item_id: int,
-    item_in: ItemCreate,
+    item_in: ItemUpdate,
     db: Session = Depends(get_db),
 ) -> Item:
     item = db.query(Item).filter(Item.id == item_id).first()
+
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
     
@@ -56,6 +62,9 @@ def update_item(
 
     if item_in.description is not None:
         item.description = item_in.description
+
+    if item_in.category_id is not None:
+        item.category_id = item_in.category_id
 
     db.commit()
     db.refresh(item)
