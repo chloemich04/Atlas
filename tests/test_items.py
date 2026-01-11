@@ -105,3 +105,37 @@ def test_filter_items_by_category(client):
     data = response.json()
     assert len(data) == 1
     assert data[0]["name"] == "Work task"
+
+def test_list_items_pagination(client):
+    for i in range(5):
+        client.post("/items/", json={"name": f"Task {i}", "description": "x"})
+    
+    response = client.get("/items/", params={"skip": 1, "limit": 2})
+
+    assert response.status_code == 200
+
+    # should skip Task 1 and return only Task 2 and Task 3
+    data = response.json()
+    assert len(data) == 2
+    assert data[0]["name"] == "Task 1"
+    assert data[1]["name"] == "Task 2"
+
+def test_update_item_category_id(client):
+    cat1 = create_category(client, "work")
+    cat2 = create_category(client, "personal")
+
+    created = client.post(
+        "/items/",
+        json={"name": "Task 1", "description": "one", "category_id": cat1["id"]},
+    ).json()
+    item_id = created["id"]
+
+    response = client.put(
+        f"/items/{item_id}",
+        json={"category_id": cat2["id"]},
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["category_id"] == cat2["id"]

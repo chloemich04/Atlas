@@ -1,5 +1,10 @@
-import os
+import sys
+from pathlib import Path
 
+ROOT_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT_DIR))
+
+import os
 import pytest
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
@@ -8,6 +13,7 @@ from fastapi.testclient import TestClient
 
 from app.db.base import Base
 from app.db import base_class
+
 
 load_dotenv()
 
