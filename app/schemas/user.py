@@ -4,7 +4,7 @@ class UserBase(BaseModel):
     email: EmailStr
 
 class UserCreate(UserBase):
-    password: str = Field(min_length=8)
+    password: str = Field(min_length=8, max_length=72)
 
 class UserRead(UserBase):
     id: int
@@ -16,4 +16,3 @@ class UserRead(UserBase):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    
