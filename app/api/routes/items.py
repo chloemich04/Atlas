@@ -4,11 +4,19 @@ from sqlalchemy.orm import Session
 from app.db.deps import get_db
 from app.models.item import Item
 from app.schemas.item import ItemCreate, ItemRead, ItemUpdate
+from app.api.deps import get_current_user
+from app.models.user import User
+
 
 router = APIRouter(prefix="/items", tags=["items"])
 
 @router.post("/", response_model=ItemRead)
-def create_item(item_in: ItemCreate, db: Session = Depends(get_db)) -> Item:
+def create_item(
+    item_in: ItemCreate, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+    ) -> Item:
+
     item = Item(
         name=item_in.name, 
         description=item_in.description, 
@@ -26,8 +34,10 @@ def list_items(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
     q: str | None = Query(default=None, min_length=1),
-    category_id: int | None = Query(default=None, ge=1)
+    category_id: int | None = Query(default=None, ge=1),
+    current_user: User = Depends(get_current_user),
     ) -> list[Item]:
+
     query = db.query(Item)
 
     if q:
@@ -35,12 +45,17 @@ def list_items(
     
     if category_id is not None:
         query = query.filter(Item.category_id == category_id)
-        
+
 
     return query.offset(skip).limit(limit).all()
 
 @router.get("/{item_id}", response_model=ItemRead)
-def get_item(item_id: int, db: Session = Depends(get_db)) -> Item:
+def get_item(
+    item_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user),
+    ) -> Item:
+
     item = db.query(Item).filter(Item.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -51,6 +66,7 @@ def update_item(
     item_id: int,
     item_in: ItemUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> Item:
     item = db.query(Item).filter(Item.id == item_id).first()
 
@@ -72,7 +88,12 @@ def update_item(
 
 
 @router.delete("/{item_id}", response_model=ItemRead)
-def delete_item(item_id: int, db: Session = Depends(get_db)) -> Item:
+def delete_item(
+    item_id: int, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    ) -> Item:
+    
     item = db.query(Item).filter(Item.id == item_id).first()
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
