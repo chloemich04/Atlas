@@ -20,7 +20,8 @@ def create_item(
     item = Item(
         name=item_in.name, 
         description=item_in.description, 
-        category_id=item_in.category_id
+        category_id=item_in.category_id,
+        user_id=current_user.id,
         )
     db.add(item)
     db.commit()
@@ -38,7 +39,7 @@ def list_items(
     current_user: User = Depends(get_current_user),
     ) -> list[Item]:
 
-    query = db.query(Item)
+    query = db.query(Item).filter(Item.user_id == current_user.id)
 
     if q:
         query = query.filter(Item.name.ilike(f"%{q}%"))
@@ -56,7 +57,7 @@ def get_item(
     current_user: User = Depends(get_current_user),
     ) -> Item:
 
-    item = db.query(Item).filter(Item.id == item_id).first()
+    item = db.query(Item).filter(Item.id == item_id, Item.user_id == current_user.id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     return item
@@ -68,7 +69,7 @@ def update_item(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Item:
-    item = db.query(Item).filter(Item.id == item_id).first()
+    item = db.query(Item).filter(Item.id == item_id, Item.user_id == current_user.id).first()
 
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -93,8 +94,8 @@ def delete_item(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     ) -> Item:
-    
-    item = db.query(Item).filter(Item.id == item_id).first()
+
+    item = db.query(Item).filter(Item.id == item_id, Item.user_id == current_user.id).first()
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
     
