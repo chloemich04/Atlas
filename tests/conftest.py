@@ -60,3 +60,25 @@ def client(db_session):
     app.dependency_overrides[get_db] = override_get_db
     yield TestClient(app)
     app.dependency_overrides.clear()
+
+@pytest.fixture()
+def auth_headers(client):
+    email = "test@example.com"
+    password = "password123"
+
+    client.post(
+        "/auth/register",
+        json={"email": email, "password": password},
+    )
+    response = client.post(
+        "/auth/login",
+        data={"username": email, "password": password}
+    )
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+@pytest.fixture()
+def auth_client(client, auth_headers):
+    client.headers.update(auth_headers)
+    yield client
+    client.headers.pop("Authorization", None)

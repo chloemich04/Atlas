@@ -1,12 +1,12 @@
 
-def create_category(client, name="work"):
-    response = client.post("/categories/", json={"name": name})
+def create_category(auth_client, name="work"):
+    response = auth_client.post("/categories/", json={"name": name})
     assert response.status_code == 200
     return response.json()
 
-def test_create_item(client):
-    category = create_category(client)
-    response = client.post(
+def test_create_item(auth_client):
+    category = create_category(auth_client)
+    response = auth_client.post(
         '/items/',
         json={
             "name": "Task 1",
@@ -22,11 +22,11 @@ def test_create_item(client):
     assert data["category_id"] == category["id"]
     assert "id" in data
 
-def test_list_items(client):
-    client.post("/items/", json={"name": "A", "description": "one"})
-    client.post("/items/", json={"name": "B", "description": "two"})
+def test_list_items(auth_client):
+    auth_client.post("/items/", json={"name": "A", "description": "one"})
+    auth_client.post("/items/", json={"name": "B", "description": "two"})
 
-    response = client.get("/items/")
+    response = auth_client.get("/items/")
     assert response.status_code == 200
 
     data = response.json()
@@ -34,27 +34,27 @@ def test_list_items(client):
     assert "A" in names
     assert "B" in names
 
-def test_get_item(client):
-    created = client.post("/items/", json={"name": "Task 1", "description": "one"}).json()
+def test_get_item(auth_client):
+    created = auth_client.post("/items/", json={"name": "Task 1", "description": "one"}).json()
     item_id = created["id"]
     
-    response = client.get(f"/items/{item_id}")
+    response = auth_client.get(f"/items/{item_id}")
     assert response.status_code == 200
 
     data = response.json()
     assert data["id"] == item_id
     assert data["name"] == "Task 1"
 
-def test_get_item_not_found(client):
-    response = client.get("/items/9999")
+def test_get_item_not_found(auth_client):
+    response = auth_client.get("/items/9999")
     assert response.status_code == 404
     assert response.json()["detail"] == "Item not found"
 
-def test_update_item(client):
-    created = client.post("/items/", json={"name": "Task 1", "description": "one"}).json()
+def test_update_item(auth_client):
+    created = auth_client.post("/items/", json={"name": "Task 1", "description": "one"}).json()
     item_id = created["id"]
 
-    response = client.put(
+    response = auth_client.put(
         f"/items/{item_id}",
         json={"name": "Task 1 Updated",
               "description": "two"},
@@ -65,52 +65,52 @@ def test_update_item(client):
     assert data["name"] == "Task 1 Updated"
     assert data["description"] == "two"
 
-def test_delete_item(client):
-    created = client.post("/items/", json={"name": "Task 1", "description": "one"}).json()
+def test_delete_item(auth_client):
+    created = auth_client.post("/items/", json={"name": "Task 1", "description": "one"}).json()
     item_id = created["id"]
 
-    response = client.delete(f"/items/{item_id}")
+    response = auth_client.delete(f"/items/{item_id}")
     assert response.status_code == 200
 
-    get_response = client.get(f"/items/{item_id}")
+    get_response = auth_client.get(f"/items/{item_id}")
     assert get_response.status_code == 404
 
-def test_search_items(client):
-    client.post("/items/", json={"name": "Alpha task", "description": "one"})
-    client.post("/items/", json={"name": "Beta task", "description": "two"})
+def test_search_items(auth_client):
+    auth_client.post("/items/", json={"name": "Alpha task", "description": "one"})
+    auth_client.post("/items/", json={"name": "Beta task", "description": "two"})
 
-    response = client.get("/items/", params={"q": "Alpha"})
+    response = auth_client.get("/items/", params={"q": "Alpha"})
     assert response.status_code == 200
 
     data = response.json()
     assert len(data) == 1
     assert data[0]["name"] == "Alpha task"
 
-def test_filter_items_by_category(client):
-    work = create_category(client, name="work")
-    personal = create_category(client, name="personal")
+def test_filter_items_by_category(auth_client):
+    work = create_category(auth_client, name="work")
+    personal = create_category(auth_client, name="personal")
 
-    client.post(
+    auth_client.post(
         "/items/",
         json={"name": "Work task", "description": "one", "category_id": work["id"]},
     )
-    client.post(
+    auth_client.post(
         "/items/",
         json={"name": "Personal task", "description": "two", "category_id": personal["id"]},
     )
 
-    response = client.get("/items/", params={"category_id": work["id"]})
+    response = auth_client.get("/items/", params={"category_id": work["id"]})
     assert response.status_code == 200
 
     data = response.json()
     assert len(data) == 1
     assert data[0]["name"] == "Work task"
 
-def test_list_items_pagination(client):
+def test_list_items_pagination(auth_client):
     for i in range(5):
-        client.post("/items/", json={"name": f"Task {i}", "description": "x"})
+        auth_client.post("/items/", json={"name": f"Task {i}", "description": "x"})
     
-    response = client.get("/items/", params={"skip": 1, "limit": 2})
+    response = auth_client.get("/items/", params={"skip": 1, "limit": 2})
 
     assert response.status_code == 200
 
@@ -120,17 +120,17 @@ def test_list_items_pagination(client):
     assert data[0]["name"] == "Task 1"
     assert data[1]["name"] == "Task 2"
 
-def test_update_item_category_id(client):
-    cat1 = create_category(client, "work")
-    cat2 = create_category(client, "personal")
+def test_update_item_category_id(auth_client):
+    cat1 = create_category(auth_client, "work")
+    cat2 = create_category(auth_client, "personal")
 
-    created = client.post(
+    created = auth_client.post(
         "/items/",
         json={"name": "Task 1", "description": "one", "category_id": cat1["id"]},
     ).json()
     item_id = created["id"]
 
-    response = client.put(
+    response = auth_client.put(
         f"/items/{item_id}",
         json={"category_id": cat2["id"]},
     )
