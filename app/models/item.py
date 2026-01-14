@@ -14,5 +14,11 @@ class Item(Base):
         nullable=True,
         index=True,
     )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True,
+    )
 
     category = relationship("Category", back_populates="items")
+    owner = relationship("User", back_populates="items")
