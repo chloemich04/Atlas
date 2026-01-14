@@ -139,3 +139,28 @@ def test_update_item_category_id(auth_client):
 
     data = response.json()
     assert data["category_id"] == cat2["id"]
+
+def test_cannot_access_other_users_items(client):
+    # User A
+    client.post("/auth/register", json={"email": "a@example.com", "password": "password123"}),
+    login_a = client.post("/auth/login", data={"username": "a@example.com", "password": "password123"})
+    token_a = login_a.json()["access_token"]
+    headers_a = {"Authorization": f"Bearer {token_a}"}
+
+    # User B
+    client.post("/auth/register", json={"email": "b@example.com", "password": "password123"}),
+    login_b = client.post("/auth/login", data={"username": "b@example.com", "password": "password123"})
+    token_b = login_b.json()["access_token"]
+    headers_b = {"Authorization": f"Bearer {token_b}"}
+
+    # User A creates an item
+    created = client.post(
+        "/items/",
+        headers=headers_a,
+        json={"name": "A item", "description": "owned by A"},
+    ).json()
+    item_id = created["id"]
+
+    # User B tries to access User A's item
+    response = client.get(f"/items/{item_id}", headers=headers_b)
+    assert response.status_code == 404 # no bueno :) 
