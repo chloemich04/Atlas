@@ -44,3 +44,35 @@ def get_category(
     if category is None:
         raise HTTPException(status_code=404, detail="Category not found")
     return category
+
+@router.put("/{category_id}", response_model=CategoryRead)
+def update_category(
+    category_id: int,
+    category_in: CategoryCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Category:
+    
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    category.name = category_in.name
+    db.commit()
+    db.refresh(category)
+    return category
+
+@router.delete("/{category_id}", response_model=CategoryRead)
+def delete_category(
+    category_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Category:
+    
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if category in None:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    db.delete(category)
+    db.commit()
+    return category
