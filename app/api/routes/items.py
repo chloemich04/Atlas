@@ -27,7 +27,7 @@ def create_item(
     if item_in.tag_ids:
         tags = db.query(Tag).filter(Tag.id.in_(item_in.tag_ids)).all()
         if len(tags) != len(set(item_in.tag_ids)):
-            raise HTTPException(status_code=404, detail="One or more tags not found")
+            raise HTTPException(status_code=400, detail="One or more tags not found")
     item.tags = tags
 
     db.add(item)
@@ -94,7 +94,7 @@ def update_item(
         if item_in.tag_ids:
             tags = db.query(Tag).filter(Tag.id.in_(item_in.tag_ids)).all()
             if len(tags) != len(set(item_in.tag_ids)):
-                raise HTTPException(status_code=404, detail="One or more tags not found")
+                raise HTTPException(status_code=400, detail="One or more tags not found")
             item.tags = tags
         else:
             item.tags = []

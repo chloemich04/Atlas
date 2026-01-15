@@ -164,3 +164,43 @@ def test_cannot_access_other_users_items(client):
     # User B tries to access User A's item
     response = client.get(f"/items/{item_id}", headers=headers_b)
     assert response.status_code == 404 # no bueno :) 
+
+def test_create_item_with_tags(auth_client):
+    tag1 = auth_client.post("/tags/", json={"name": "urgent"}).json()
+    tag2 = auth_client.post("/tags/", json={"name": "backend"}).json()
+
+    response = auth_client.post(
+        "/items/",
+        json={
+            "name": "Tagged items",
+            "description": "has tags",
+            "tag_ids": [tag1["id"], tag2["id"]],
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    tag_names = {t["name"] for t in data["tags"]}
+    assert tag_names == {"urgent", "backend"}
+
+def test_update_item_tags(auth_client):
+    tag1 = auth_client.post("/tags/", json={"name": "urgent"}).json()
+    tag2 = auth_client.post("/tags/", json={"name": "backend"}).json()
+
+    created = auth_client.post("/items/", json={"name": "Item", "description": "x"}).json()
+    item_id = created["id"]
+
+    response = auth_client.put(
+        f"/items/{item_id}",
+        json={"tag_ids": [tag1["id"], tag2["id"]]},
+    )
+    assert response.status_code == 200
+    tag_names = {t["name"] for t in response.json()["tags"]}
+    assert tag_names == {"urgent", "backend"}
+
+def test_create_item_with_invalid_tag_id(auth_client):
+    response = auth_client.post(
+        "/items/",
+        json={"name": "Bad item", "description": "x", "tag_ids": [9999]},
+    )    
+    assert response.status_code == 400
+    assert response.json()["detail"] == "One or more tags not found"
