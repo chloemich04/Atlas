@@ -6,6 +6,7 @@ from app.models.item import Item
 from app.schemas.item import ItemCreate, ItemRead, ItemUpdate
 from app.api.deps import get_current_user
 from app.models.user import User
+from app.models.tag import Tag
 
 
 router = APIRouter(prefix="/items", tags=["items"])
@@ -16,13 +17,19 @@ def create_item(
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
     ) -> Item:
-
     item = Item(
         name=item_in.name, 
         description=item_in.description, 
         category_id=item_in.category_id,
         user_id=current_user.id,
-        )
+    )
+    tags = []
+    if item_in.tag_ids:
+        tags = db.query(Tag).filter(Tag.id.in_(item_in.tag_ids)).all()
+        if len(tags) != len(set(item_in.tag_ids)):
+            raise HTTPException(status_code=404, detail="One or more tags not found")
+    item.tags = tags
+
     db.add(item)
     db.commit()
     db.refresh(item)
@@ -83,6 +90,14 @@ def update_item(
     if item_in.category_id is not None:
         item.category_id = item_in.category_id
 
+    if item_in.tag_ids is not None:
+        if item_in.tag_ids:
+            tags = db.query(Tag).filter(Tag.id.in_(item_in.tag_ids)).all()
+            if len(tags) != len(set(item_in.tag_ids)):
+                raise HTTPException(status_code=404, detail="One or more tags not found")
+            item.tags = tags
+        else:
+            item.tags = []
     db.commit()
     db.refresh(item)
     return item
