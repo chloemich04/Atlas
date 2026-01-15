@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user,
+from app.api.deps import get_current_user
 from app.db.deps import get_db
 from app.models.tag import Tag
 from app.models.user import User
@@ -21,7 +21,7 @@ def create_tag(
     db.refresh(tag)
     return tag
 
-@router.get("/", response_model=TagRead)
+@router.get("/", response_model=list[TagRead])
 def list_tags(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -63,9 +63,9 @@ def delete_tag(
     current_user: User = Depends(get_current_user),
 ) -> Tag:
     
-    tag = db.query(Tag).filter(Tag.id == tag.id).first()
+    tag = db.query(Tag).filter(Tag.id == tag_id).first()
     if tag is None:
-        raiseHTTPException(status_code=404, detail="Tag not found")
+        raise HTTPException(status_code=404, detail="Tag not found")
 
     db.delete(tag)
     db.commit()
