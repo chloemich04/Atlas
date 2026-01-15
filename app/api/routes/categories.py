@@ -70,7 +70,7 @@ def delete_category(
 ) -> Category:
     
     category = db.query(Category).filter(Category.id == category_id).first()
-    if category in None:
+    if category is None:
         raise HTTPException(status_code=404, detail="Category not found")
     
     db.delete(category)
