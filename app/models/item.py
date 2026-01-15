@@ -1,7 +1,7 @@
 from sqlalchemy import String, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
-
+from app.models.tag import item_tags
 
 class Item(Base):
     __tablename__ = "items"
@@ -20,5 +20,7 @@ class Item(Base):
         index=True,
     )
 
+
     category = relationship("Category", back_populates="items")
     owner = relationship("User", back_populates="items")
+    tags = relationship("Tag", secondary=item_tags, back_populates="items")

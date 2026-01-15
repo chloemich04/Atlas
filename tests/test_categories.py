@@ -44,3 +44,21 @@ def test_get_category_not_found(auth_client):
     assert response.status_code == 404
     # verify to see if the not found message shows up
     assert response.json()["detail"] == "Category not found"
+
+def test_update_category(auth_client):
+    created = auth_client.post("/categories/", json={"name": "work"}).json()
+    category_id = created["id"]
+
+    response = auth_client.put(f"/categories/{category_id}", json={"name": "work-updated"})
+    assert response.status_code == 200
+    assert response.json()["name"] == "work-updated"
+
+def test_delete_category(auth_client):
+    created = auth_client.post("/categories/", json={"name": "to-delete"}).json()
+    category_id = created["id"]
+
+    response = auth_client.delete(f"/categories/{category_id}")
+    assert response.status_code == 200
+
+    get_response = auth_client.get(f"/categories/{category_id}")
+    assert get_response.status_code == 404
