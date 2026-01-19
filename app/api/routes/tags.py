@@ -32,7 +32,7 @@ def list_tags(
 def get_tag(
     tag_id: int,
     db: Session = Depends(get_db),
-    ourrent_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ) -> Tag:
     tag = db.query(Tag).filter(Tag.id == tag_id).first()
     if tag is None:

@@ -6,7 +6,7 @@ item_tags = Table(
     "item_tags",
     Base.metadata,
     Column("item_id", ForeignKey("items.id"), primary_key=True),
-    Column("tags_id", ForeignKey("tags.id"), primary_key=True),
+    Column("tag_id", ForeignKey("tags.id"), primary_key=True),
 )
 
 class Tag(Base):

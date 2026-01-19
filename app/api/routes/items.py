@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.deps import get_db
@@ -43,6 +44,7 @@ def list_items(
     limit: int = Query(10, ge=1, le=100),
     q: str | None = Query(default=None, min_length=1),
     category_id: int | None = Query(default=None, ge=1),
+    tag_ids: list[int] | None = Query(default=None),
     current_user: User = Depends(get_current_user),
     ) -> list[Item]:
 
@@ -53,6 +55,9 @@ def list_items(
     
     if category_id is not None:
         query = query.filter(Item.category_id == category_id)
+
+    if tag_ids:
+        query = query.filter(Item.tags.any(Tag.id.in_(tag_ids)))
 
 
     return query.offset(skip).limit(limit).all()
